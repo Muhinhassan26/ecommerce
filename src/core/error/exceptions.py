@@ -2,6 +2,7 @@ from typing import Any
 
 from fastapi import status
 from src.core.error.codes import (
+    DATABASE_ERROR,
     EMAIL_ALREADY_EXISTS,
     FORBIDDEN_ERROR,
     INTERNAL_ERROR,
@@ -85,3 +86,9 @@ class InternalServerException(CustomException):
     code = status.HTTP_500_INTERNAL_SERVER_ERROR
     error_code = INTERNAL_ERROR
     message: str = ERROR_MAPPER.get(INTERNAL_ERROR) or "Internal Server Error"
+
+
+class DatabaseException(CustomException):
+    code = status.HTTP_500_INTERNAL_SERVER_ERROR
+    error_code = INTERNAL_ERROR
+    message: str = ERROR_MAPPER.get(DATABASE_ERROR) or "Database Error"
