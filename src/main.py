@@ -19,6 +19,7 @@ class EcommerceApp:
             redoc_url="/api/redoc" if settings.DEBUG else None,
         )
         self.validation_error_handler()
+        self.make_middleware()
 
     def validation_error_handler(self) -> None:
         self.app.add_exception_handler(

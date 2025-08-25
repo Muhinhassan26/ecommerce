@@ -1,12 +1,9 @@
 from typing import Annotated
 
 from fastapi import Depends
-from src.core.error.exceptions import (
-    EmailAlreadyExistsException,
-    InternalServerException,
-    InvalidCredentialsException,
-    NotFoundException,
-)
+from src.core.error.codes import INVALID_CRED, USER_EXISTS
+from src.core.error.exceptions import NotFoundException, ValidationException
+from src.core.error.format_error import ERROR_MAPPER
 from src.core.logger import logger
 from src.core.schemas.common import FilterOptions
 from src.core.security import PasswordHandler
@@ -35,7 +32,7 @@ class UserAuthService:
 
         if user:
             self.logger.warning(f"User with email {user_data.email} already exists.")
-            raise EmailAlreadyExistsException()
+            raise ValidationException(errors=ERROR_MAPPER[USER_EXISTS])
         hashed_password = PasswordHandler.hash(user_data.password)
 
         user = User(
@@ -46,12 +43,7 @@ class UserAuthService:
             password=hashed_password,
         )
 
-        try:
-            created_user = await self.user_repository.create(obj=user)
-
-        except Exception as e:
-            self.logger.error(f"Database error during user creation: {str(e)}")
-            raise InternalServerException(errors=str(e)) from e
+        created_user = await self.user_repository.create(obj=user)
 
         self.logger.info(
             f"User registered successfully: user_id={created_user.id}, email={created_user.email}"
@@ -62,24 +54,18 @@ class UserAuthService:
         access_payload = AccessTokenPayload(user_id=user_id, sub="access")
         refresh_payload = RefreshTokenPayload(user_id=user_id, sub="refresh")
 
-        try:
-            access_token, access_expire = JWTHandler.encode(
-                token_type="access", payload=access_payload
-            )
-            refresh_token, _ = JWTHandler.encode(token_type="refresh", payload=refresh_payload)
-            return TokenResponse(
-                access_token=access_token,
-                refresh_token=refresh_token,
-                user_id=user_id,
-                access_token_expire=access_expire,
-            )
-        except Exception as e:
-            self.logger.error(f"Token generation failed: {str(e)}")
-            raise InternalServerException(errors="Token generation failed") from e
+        access_token, access_expire = JWTHandler.encode(token_type="access", payload=access_payload)
+        refresh_token, _ = JWTHandler.encode(token_type="refresh", payload=refresh_payload)
+        return TokenResponse(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            user_id=user_id,
+            access_token_expire=access_expire,
+        )
 
     async def login_user(self, login_data: UserLoginSchema) -> TokenResponse:
         filter_options = FilterOptions(
-            filters={"email": login_data.username},
+            filters={"username": login_data.username},
         )
         user = await self.user_repository.get_by_filed(filter_options=filter_options)
         if not user:
@@ -89,6 +75,6 @@ class UserAuthService:
         is_password_valid = PasswordHandler.verify_password(login_data.password, user.password)
         if not is_password_valid:
             self.logger.warning(f"Invalid password for username {login_data.username}.")
-            raise InvalidCredentialsException()
+            raise ValidationException(ERROR_MAPPER[INVALID_CRED])
 
         return self.generate_token(user_id=str(user.id))

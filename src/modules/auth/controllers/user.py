@@ -8,7 +8,7 @@ from src.modules.auth.services.user import UserAuthService
 router = APIRouter(prefix="/user")
 
 
-@router.post("/signup", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/signup/", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
 async def signup(
     user_data: UserRegisterSchema,
     user_auth_service: Annotated[UserAuthService, Depends(UserAuthService)],
