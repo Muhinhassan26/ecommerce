@@ -10,7 +10,7 @@ from starlette.requests import Request
 
 
 class CustomErrorMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next: Callable[[Request, Any]]) -> Any:
+    async def dispatch(self, request: Request, call_next: Callable[[Request], Any]) -> Any:
         try:
             return await call_next(request)
         except SQLAlchemyError:

@@ -2,9 +2,8 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, status
 from src.core.logger import logger
-
-from modules.auth.schemas import TokenResponse, UserLoginSchema, UserRegisterSchema
-from modules.auth.services.user import UserAuthService
+from src.modules.auth.schemas import TokenResponse, UserLoginSchema, UserRegisterSchema
+from src.modules.auth.services.user import UserAuthService
 
 router = APIRouter(prefix="/user")
 

@@ -3,9 +3,8 @@ from typing import Annotated
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.core.db import get_db
+from src.core.repository.base import BaseRepository
 from src.modules.users.models import User
-
-from core.repository.base import BaseRepository
 
 
 class UserRepository(BaseRepository[User]):

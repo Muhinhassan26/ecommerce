@@ -1,10 +1,10 @@
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from src.core.config import settings
+from src.core.middleware.error_handler import CustomErrorMiddleware
+from src.core.middleware.validation import validation_exception_handler
+from src.routers import api_router
 from starlette.middleware.cors import CORSMiddleware
-
-from core.middleware.error_handler import CustomErrorMiddleware
-from core.middleware.validation import validation_exception_handler
 
 
 class EcommerceApp:
@@ -37,7 +37,7 @@ class EcommerceApp:
         self.app.add_middleware(CustomErrorMiddleware)
 
     def init_routers(self) -> None:
-        pass
+        self.app.include_router(api_router)
 
     def create_app(self) -> FastAPI:
         self.init_routers()

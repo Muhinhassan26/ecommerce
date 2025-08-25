@@ -8,19 +8,18 @@ from src.core.error.exceptions import (
     NotFoundException,
 )
 from src.core.logger import logger
+from src.core.schemas.common import FilterOptions
 from src.core.security import PasswordHandler
-from src.modules.users.models import User
-from src.modules.users.repository import UserRepository
-
-from core.schemas.common import FilterOptions
-from core.security.jwt_handler import JWTHandler
-from modules.auth.schemas import (
+from src.core.security.jwt_handler import JWTHandler
+from src.modules.auth.schemas import (
     AccessTokenPayload,
     RefreshTokenPayload,
     TokenResponse,
     UserLoginSchema,
     UserRegisterSchema,
 )
+from src.modules.users.models import User
+from src.modules.users.repository import UserRepository
 
 
 class UserAuthService:
