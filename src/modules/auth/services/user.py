@@ -28,7 +28,7 @@ class UserAuthService:
         self.user_repository = user_repository
         self.logger = logger
 
-    async def register(self, user_data: UserRegisterSchema):
+    async def register(self, user_data: UserRegisterSchema) -> TokenResponse:
         filter_options = FilterOptions(
             filters={"email": user_data.email},
         )
