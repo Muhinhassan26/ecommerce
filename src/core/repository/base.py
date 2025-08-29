@@ -241,7 +241,9 @@ class BaseRepository(Generic[ModelType]):  # noqa: UP046
         await session.refresh(obj)
         return obj
 
-    async def update_obj(self, where: dict[str, Any], values: dict[str, Any]) -> int:
+    async def update_obj(
+        self, where: dict[str, Any], values: dict[str, Any]
+    ) -> tuple[ModelType, int] | None:
         session = self.session
         filters = self._build_filters(where)
 
@@ -258,7 +260,9 @@ class BaseRepository(Generic[ModelType]):  # noqa: UP046
         query = update(self.model).where(and_(True, *filters)).values(**update_values)
         result = await session.execute(query)
         await session.commit()
-        return result.rowcount
+        row = result.scalars().one_or_none()  # list of updated model instances
+        rowcount = result.rowcount
+        return row, rowcount
 
     async def create_and_update(
         self,

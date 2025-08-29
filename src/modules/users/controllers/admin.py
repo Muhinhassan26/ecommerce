@@ -42,7 +42,7 @@ async def update_user(
     return ResponseMessage(message="User updated successfully")
 
 
-@router.post("create-admin", response_model=ResponseMessage)
+@router.post("/create-admin", response_model=ResponseMessage)
 async def create_admin(
     create_admin: CreateAdmin, admin_service: Annotated[AdminService, Depends(AdminService)]
 ) -> ResponseMessage:
