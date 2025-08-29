@@ -46,3 +46,8 @@ class MaintenanceModeException(CustomException):
 class UpdateRequiredException(CustomException):
     code = status.HTTP_403_FORBIDDEN
     message = "Update Required"
+
+
+class InvalidCredentialsException(CustomException):
+    code = status.HTTP_401_UNAUTHORIZED
+    message = "Invalid credentials"
