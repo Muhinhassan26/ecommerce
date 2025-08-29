@@ -10,7 +10,7 @@ from starlette.requests import Request
 
 
 class CustomErrorMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next: Callable[[Request, Any]]) -> Any:
+    async def dispatch(self, request: Request, call_next: Callable[[Request], Any]) -> Any:
         try:
             return await call_next(request)
         except SQLAlchemyError:
@@ -32,7 +32,7 @@ class CustomErrorMiddleware(BaseHTTPMiddleware):
                 message=f"CustomException: {error_msg}",
                 status_code=exc.code,
                 user_message="Something went wrong" if exc.code == 500 else exc.message,
-                errors=None if exc.code == 500 else exc.errors,
+                error=None if exc.code == 500 else exc.errors,
             )
         except Exception as exc:  # pylint: disable=broad-exception-caught
             return await self._handle_exception(

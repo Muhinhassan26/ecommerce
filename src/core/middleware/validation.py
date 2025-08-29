@@ -2,9 +2,8 @@ from fastapi import Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from src.core.error.codes import REGISTRATION_FAILED
-
-from core.error.exceptions import ValidationException
-from core.error.format_error import field_error_format
+from src.core.error.exceptions import ValidationException
+from src.core.error.format_error import field_error_format
 
 
 async def validation_exception_handler(

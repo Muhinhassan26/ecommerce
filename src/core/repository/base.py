@@ -71,7 +71,7 @@ class BaseRepository(Generic[ModelType]):  # noqa: UP046
     async def get_by_id(
         self,
         obj_id: int,
-        filter_options: FilterOptions,
+        filter_options: FilterOptions | None = None,
     ) -> ModelType | None:
         query = self._get_query(prefetch=filter_options.prefetch).where(self.model.id == obj_id)  # type:ignore
 
