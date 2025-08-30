@@ -32,7 +32,13 @@ class ProductUserService(BaseService):
         self,
         query_params: QueryParams,
     ) -> PaginatedResponse[ProductResponse]:
+        filters = {}
+
+        if query_params.filter_params:
+            filters.update(query_params.filter_params)
+
         filter_options = FilterOptions(
+            filters=filters,
             pagination=query_params,
             sorting={"created_at": "desc"},
             search_fields=["name", "description"],
