@@ -9,18 +9,17 @@ class ProductBase(BaseModel):
     is_active: bool = True
     category: str | None = None
 
+    class Config:  # noqa: D106
+        orm_mode = True
+
 
 class ProductCreate(ProductBase):
     pass
 
 
 class ProductUpdate(ProductBase):
-    class Config:  # noqa: D106
-        orm_mode = True
+    pass
 
 
 class ProductResponse(ProductBase):
     id: int
-
-    class Config:  # noqa: D106
-        orm_mode = True

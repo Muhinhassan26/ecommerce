@@ -17,15 +17,23 @@ class ProductAdminService(BaseService):
         self.product_repo = product_repo
         self.logger = logger
 
-    async def get_all_products(self) -> list[ProductResponse]:
-        filter_options = FilterOptions(sorting={"created_at": "desc"})
+    async def get_all_products(self, category: str) -> list[ProductResponse]:
+        filter_options = FilterOptions(
+            sorting={"created_at": "desc"}, filters={"category": category}
+        )
         return await self.product_repo.filter(filter_options=filter_options)
 
     async def get_paginate_product(
         self,
         query_params: QueryParams,
     ) -> PaginatedResponse[ProductResponse]:
+        filters = {}
+
+        if query_params.filter_params:
+            filters.update(query_params.filter_params)
+
         filter_options = FilterOptions(
+            filters=filters,
             pagination=query_params,
             sorting={"created_at": "desc"},
             search_fields=["name", "description"],
@@ -60,12 +68,14 @@ class ProductAdminService(BaseService):
     async def create_product(
         self,
         create_product: ProductCreate,
-    ) -> ProductCreate:
+    ) -> ProductResponse:
         new_product = self.product_repo.create(obj=Product(**create_product.model_dump()))
         self.logger.info(f"Product created: product_id={new_product.id}")
         return new_product
 
-    async def update_product(self, product_id: int, update_product: ProductUpdate) -> ProductUpdate:
+    async def update_product(
+        self, product_id: int, update_product: ProductUpdate
+    ) -> ProductResponse:
         filters = {"id": product_id}
 
         updated, total = self.product_repo.update_obj(
