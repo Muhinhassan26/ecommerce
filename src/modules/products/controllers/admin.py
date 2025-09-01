@@ -18,7 +18,7 @@ async def get_products(
         CommonQueryParam(filter_fields=["is_active", "category", "name"])
     ),
 ):
-    return await product_service.get_paginate_product(query_params=query_paramas)
+    return await product_service.get_products(query_params=query_paramas)
 
 
 @router.get("/{product_id}", response_model=ProductResponse)

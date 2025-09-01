@@ -1,5 +1,5 @@
 from sqlalchemy import Boolean, Integer, Numeric, String, Text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.core.models import BaseModel
 
 
@@ -12,3 +12,5 @@ class Product(BaseModel):
     stock: Mapped[int] = mapped_column(Integer, default=0)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     category: Mapped[str | None] = mapped_column(String(50), nullable=True)
+
+    order_products = relationship("OrderProduct", back_populates="product")

@@ -17,13 +17,7 @@ class ProductAdminService(BaseService):
         self.product_repo = product_repo
         self.logger = logger
 
-    async def get_all_products(self, category: str) -> list[ProductResponse]:
-        filter_options = FilterOptions(
-            sorting={"created_at": "desc"}, filters={"category": category}
-        )
-        return await self.product_repo.filter(filter_options=filter_options)
-
-    async def get_paginate_product(
+    async def get_products(
         self,
         query_params: QueryParams,
     ) -> PaginatedResponse[ProductResponse]:
@@ -38,11 +32,7 @@ class ProductAdminService(BaseService):
             sorting={"created_at": "desc"},
             search_fields=["name", "description"],
         )
-        products, total = self.product_repo.paginate_filters(filter_options=filter_options)
-
-        if total == 0:
-            logger.error(msg="No products available")
-            raise NotFoundException(message=ERROR_MAPPER[NO_DATA])
+        products, total = await self.product_repo.paginate_filters(filter_options=filter_options)
 
         return PaginatedResponse(
             data=products,
@@ -63,7 +53,8 @@ class ProductAdminService(BaseService):
             logger.error(msg=f"Product with id {product_id} is not available")
             raise NotFoundException(message=ERROR_MAPPER[NO_DATA])
 
-        return product
+        # return product
+        return ProductResponse.model_validate(product)
 
     async def create_product(
         self,
