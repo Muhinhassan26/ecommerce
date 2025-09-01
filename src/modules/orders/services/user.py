@@ -5,7 +5,7 @@ from src.core.error.exceptions import NotFoundException, RequestError
 from src.core.error.format_error import ERROR_MAPPER, NO_DATA
 from src.core.helpers.enums import OrderStatus
 from src.core.logger import logger
-from src.core.schemas.common import FilterOptions
+from src.core.schemas.common import FilterOptions, PaginatedResponse, QueryParams
 from src.core.service.base_service import BaseService
 from src.modules.orders.models import Order, OrderProduct
 from src.modules.orders.repository import OrderRepository
@@ -51,16 +51,24 @@ class OrderUserService(BaseService):
         created_order = await self.order_repo.create(order)
         return OrderResponse.model_validate(created_order)
 
-    async def get_my_orders(self, user_id: int) -> list[OrderResponse]:
+    async def get_my_orders(
+        self, query_params: QueryParams, user_id: int
+    ) -> PaginatedResponse[OrderResponse]:
         filter_options = FilterOptions(
             filters={"user_id": user_id},
             distinct_on="id",
             prefetch=("order_products",),
             sorting={"created_at": "desc"},
+            pagination=query_params,
         )
 
-        orders = await self.order_repo.filter(filter_options)
-        return [OrderResponse.model_validate(order) for order in orders]
+        orders, total = await self.order_repo.paginate_filters(filter_options)
+        PaginatedResponse[OrderResponse](
+            data=orders,
+            meta=self.setup_pagination_meta(
+                total=total, page_size=query_params.page_size, page=query_params.page
+            ),
+        )
 
     async def get_order_detail(self, user_id: int, order_id: int) -> OrderResponse:
         filter_options = FilterOptions(
