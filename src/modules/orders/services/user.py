@@ -54,8 +54,11 @@ class OrderUserService(BaseService):
     async def get_my_orders(
         self, query_params: QueryParams, user_id: int
     ) -> PaginatedResponse[OrderResponse]:
+        filters = {"user_id": user_id}
+        if query_params.filter_params:
+            filters.update(query_params.filter_params)
         filter_options = FilterOptions(
-            filters={"user_id": user_id},
+            filters=filters,
             distinct_on="id",
             prefetch=("order_products",),
             sorting={"created_at": "desc"},

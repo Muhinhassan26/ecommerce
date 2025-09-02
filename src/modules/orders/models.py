@@ -26,18 +26,3 @@ class OrderProduct(BaseModel):
 
     order = relationship("Order", back_populates="order_products")
     product = relationship("Product", back_populates="order_products")
-
-
-# payloadd
-
-# [
-
-#     {
-#         "product_id": 1,
-#         "quantity": 2
-#     },
-#     {
-#         "product_id": 2,
-#         "quantity": 1
-#     }
-# ]
