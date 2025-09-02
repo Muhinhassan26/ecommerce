@@ -6,17 +6,17 @@ from src.core.schemas.common import PaginatedResponse, QueryParams
 from src.modules.users.schemas import CreateAdmin, ResponseMessage, UpdateUser, UserResponse
 from src.modules.users.services import AdminService
 
-router = APIRouter(prefix="/admin")
+router = APIRouter(prefix="/user")
 
 
-@router.get("/users", response_model=list[UserResponse])
-async def get_users(
-    admin_service: Annotated[AdminService, Depends(AdminService)],
-) -> list[UserResponse]:
-    return await admin_service.get_all_users()
+# @router.get("/users", response_model=list[UserResponse])
+# async def get_users(
+#     admin_service: Annotated[AdminService, Depends(AdminService)],
+# ) -> list[UserResponse]:
+#     return await admin_service.get_all_users()
 
 
-@router.get("/users/paginate", response_model=PaginatedResponse[UserResponse])
+@router.get("/", response_model=PaginatedResponse[UserResponse])
 async def get_users(  # noqa: F811
     admin_service: Annotated[AdminService, Depends(AdminService)],
     query_params: QueryParams = Depends(CommonQueryParam(filter_fields=["username", "email"])),
@@ -24,7 +24,7 @@ async def get_users(  # noqa: F811
     return await admin_service.get_paginate_users(query_params=query_params)
 
 
-@router.get("/users/{user_id}", response_model=UserResponse)
+@router.get("/{user_id}", response_model=UserResponse)
 async def get_user_by_id(
     user_id: int,
     admin_service: Annotated[AdminService, Depends(AdminService)],
@@ -32,7 +32,7 @@ async def get_user_by_id(
     return await admin_service.get_user_by_id(user_id=user_id)
 
 
-@router.patch("/users/{user_id}", response_model=ResponseMessage)
+@router.patch("/{user_id}", response_model=ResponseMessage)
 async def update_user(
     user_id: int,
     update_user: UpdateUser,
@@ -42,7 +42,7 @@ async def update_user(
     return ResponseMessage(message="User updated successfully")
 
 
-@router.post("/create-admin", response_model=ResponseMessage)
+@router.post("/", response_model=ResponseMessage)
 async def create_admin(
     create_admin: CreateAdmin, admin_service: Annotated[AdminService, Depends(AdminService)]
 ) -> ResponseMessage:

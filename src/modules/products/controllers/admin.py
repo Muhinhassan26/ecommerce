@@ -7,7 +7,7 @@ from src.modules.products.schemas import ProductCreate, ProductResponse
 from src.modules.products.services.admin import ProductAdminService
 
 router = APIRouter(
-    prefix="/admin/products",
+    prefix="/products",
 )
 
 

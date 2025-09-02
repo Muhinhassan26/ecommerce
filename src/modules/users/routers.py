@@ -5,9 +5,13 @@ api_router = APIRouter()
 
 api_router.include_router(
     admin_router,
-    prefix="/users",
+    prefix="/admin",
     tags=["User Admin"],
 )
 
 
-api_router.include_router(user_router, tags=["User"], prefix="/users")
+api_router.include_router(
+    user_router,
+    prefix="/users",
+    tags=["User"],
+)

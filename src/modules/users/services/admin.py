@@ -18,9 +18,9 @@ class AdminService(BaseService):
         self.user_repository = user_repository
         self.logger = logger
 
-    async def get_all_users(self) -> list[User]:
-        filter_options = FilterOptions(sorting={"created_at": "desc"})
-        return await self.user_repository.list_all(filter_options=filter_options)
+    # async def get_all_users(self) -> list[User]:
+    #     filter_options = FilterOptions(sorting={"created_at": "desc"})
+    #     return await self.user_repository.list_all(filter_options=filter_options)
 
     async def get_paginate_users(
         self,

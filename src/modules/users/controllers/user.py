@@ -4,9 +4,7 @@ from fastapi import APIRouter, Depends, Request
 from src.modules.users.schemas import ChangePassword, GetProfile, ResponseMessage, UpdateProfile
 from src.modules.users.services.user import UserService
 
-router = APIRouter(
-    prefix="/users",
-)
+router = APIRouter()
 
 
 @router.get("/profile/", response_model=GetProfile)
