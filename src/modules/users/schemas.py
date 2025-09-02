@@ -23,7 +23,7 @@ class CreateAdmin(BaseModel):
     is_active: bool = True
     is_staff: bool = False
     is_superadmin: bool = False
-    role: UserRole = None
+    role: UserRole
 
 
 class UserResponse(BaseModel):
