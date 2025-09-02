@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends
 from src.core.dependencies import CommonQueryParam
@@ -16,7 +16,7 @@ async def list_orders(
     query_params: QueryParams = Depends(
         CommonQueryParam(filter_fields=["status", "user_id", "created_at"])
     ),
-):
+) -> Any:
     return await service.list_orders(
         query_params=query_params, user_id=query_params.filter_params.get("user_id")
     )
@@ -26,7 +26,7 @@ async def list_orders(
 async def get_order_detail(
     order_id: int,
     service: Annotated[OrderAdminService, Depends(OrderAdminService)],
-):
+) -> Any:
     return await service.get_order_detail(order_id=order_id)
 
 
@@ -35,5 +35,5 @@ async def update_order_status(
     order_id: int,
     status: OrderStatus,
     service: Annotated[OrderAdminService, Depends(OrderAdminService)],
-):
+) -> Any:
     return await service.update_order_status(order_id=order_id, status=status)

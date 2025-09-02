@@ -48,7 +48,7 @@ class AdminService(BaseService):
     async def get_user_by_id(self, user_id: int) -> User | None:
         return await self.user_repository.get_by_id(obj_id=user_id)
 
-    async def update_user(self, user_id: int, update_user: UpdateUser):
+    async def update_user(self, user_id: int, update_user: UpdateUser) -> None:
         filters = {"id": user_id}
         updated_user = await self.user_repository.update_obj(
             where=filters,

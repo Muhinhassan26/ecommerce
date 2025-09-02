@@ -22,7 +22,7 @@ class QueryParams(BaseModel):
 
 
 class FilterOptions(BaseModel):
-    filters: dict[str, Any]
+    filters: dict[str, Any] | None = None
     pagination: QueryParams | None = None
     search_fields: list[str] | None = None
     sorting: dict[str, str] | None = None

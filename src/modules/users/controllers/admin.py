@@ -29,7 +29,8 @@ async def get_user_by_id(
     user_id: int,
     admin_service: Annotated[AdminService, Depends(AdminService)],
 ) -> UserResponse:
-    return await admin_service.get_user_by_id(user_id=user_id)
+    user = await admin_service.get_user_by_id(user_id=user_id)
+    return UserResponse.model_validate(user)
 
 
 @router.patch("/{user_id}", response_model=ResponseMessage)

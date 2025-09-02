@@ -23,7 +23,7 @@ class UserService:
             raise NotFoundException(message=ERROR_MAPPER[NO_DATA])
         return user
 
-    async def update_profile(self, user_id: int, update_profile: UpdateProfile) -> User:
+    async def update_profile(self, user_id: int, update_profile: UpdateProfile) -> tuple[User, int]:
         filters = {"id": user_id}
         updated_user = await self.user_repository.update_obj(
             where=filters,

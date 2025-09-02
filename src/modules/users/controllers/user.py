@@ -12,7 +12,8 @@ async def get_profile(
     request: Request, user_service: Annotated[UserService, Depends(UserService)]
 ) -> GetProfile:
     user_id = request.state.user.get("user_id")
-    return await user_service.get_profile(user_id=user_id)
+    profile = await user_service.get_profile(user_id=user_id)
+    return GetProfile.model_validate(profile)
 
 
 @router.patch("/update-profile/", response_model=ResponseMessage)

@@ -20,8 +20,10 @@ class OrderUserService(BaseService):
     def __init__(
         self,
         order_repo: Annotated[OrderRepository, Depends(OrderRepository)],
+        product_repo: Annotated[ProductRepository, Depends(ProductRepository)],
     ):
         self.order_repo = order_repo
+        self.product_repo = product_repo
         self.logger = logger
 
     async def create_order(self, user_id: int, create_order: OrderCreate) -> OrderResponse:
@@ -29,12 +31,12 @@ class OrderUserService(BaseService):
         order_products: list[OrderProduct] = []
 
         for item in create_order.items:
-            product = await ProductRepository.get_by_id(obj_id=item.product_id)
+            product = await self.product_repo.get_by_id(obj_id=item.product_id)
             if not product:
                 raise NotFoundException(message=ERROR_MAPPER[NO_DATA])
 
             price = float(product.price)
-            total_price = price * item.quantity
+            total_price = price * float(item.quantity)
 
             total_amount += total_price
             order_products.append(

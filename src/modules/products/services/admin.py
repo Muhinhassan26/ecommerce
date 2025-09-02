@@ -60,16 +60,16 @@ class ProductAdminService(BaseService):
         self,
         create_product: ProductCreate,
     ) -> ProductResponse:
-        new_product = self.product_repo.create(obj=Product(**create_product.model_dump()))
+        new_product = await self.product_repo.create(obj=Product(**create_product.model_dump()))
         self.logger.info(f"Product created: product_id={new_product.id}")
-        return new_product
+        return ProductResponse.model_validate(new_product)
 
     async def update_product(
         self, product_id: int, update_product: ProductUpdate
     ) -> ProductResponse:
         filters = {"id": product_id}
 
-        updated, total = self.product_repo.update_obj(
+        updated, total = await self.product_repo.update_obj(
             where=filters, values=update_product.model_dump(exclude_none=True)
         )
 
@@ -78,10 +78,11 @@ class ProductAdminService(BaseService):
             raise NotFoundException(message=ERROR_MAPPER[NO_DATA])
 
         self.logger.info(f"Product updated: product_id={product_id}")
-        return updated
+        return ProductResponse.model_validate(updated)
 
     async def delete_product(self, product_id: int) -> None:
         filters = {"id": product_id}
 
         filter_options = FilterOptions(filters=filters)
-        return await self.product_repo.delete(filter_options=filter_options)
+        await self.product_repo.delete(filter_options=filter_options)
+        self.logger.info(f"Product Deleted: product_id={product_id}")

@@ -26,7 +26,7 @@ class ProductUserService(BaseService):
             logger.error(msg=f"Product with id {product_id} is not available")
             raise NotFoundException(message=ERROR_MAPPER[NO_DATA])
 
-        return product
+        return ProductResponse.model_validate(product)
 
     async def get_paginate_product(
         self,
@@ -43,7 +43,7 @@ class ProductUserService(BaseService):
             sorting={"created_at": "desc"},
             search_fields=["name", "description"],
         )
-        products, total = self.product_repo.paginate_filters(filter_options=filter_options)
+        products, total = await self.product_repo.paginate_filters(filter_options=filter_options)
 
         if total == 0:
             logger.error(msg="No products available")
