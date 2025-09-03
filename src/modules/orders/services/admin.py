@@ -24,7 +24,7 @@ class OrderAdminService(BaseService):
         query_params: QueryParams,
         user_id: int,
     ) -> PaginatedResponse[OrderResponse]:
-        filters = {"user_id": user_id}
+        filters = {"user_id": int(user_id)}
         if query_params.filter_params:
             filters.update(query_params.filter_params)
         filter_options = FilterOptions(

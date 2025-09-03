@@ -69,9 +69,12 @@ class ProductAdminService(BaseService):
     ) -> ProductResponse:
         filters = {"id": product_id}
 
-        updated, total = await self.product_repo.update_obj(
+        result = await self.product_repo.update_obj(
             where=filters, values=update_product.model_dump(exclude_none=True)
         )
+        if not result:
+            return None
+        updated, total = result
 
         if total == 0:
             self.logger.warning(f"Product update failed: product_id={product_id}")

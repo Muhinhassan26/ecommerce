@@ -12,13 +12,12 @@ async def validation_exception_handler(
 ) -> JSONResponse:
     if isinstance(exc, RequestValidationError):
         details = exc.errors()
-        errros = field_error_format(details, is_pydantic_validation_error=True)
-        ve = ValidationException(errors=errros, error_code=REGISTRATION_FAILED)
+        errros = field_error_format(list(details), is_pydantic_validation_error=True)
+        ve = ValidationException(errors=errros, message=REGISTRATION_FAILED)
 
         return JSONResponse(
             status_code=ve.code,
             content={
-                "error_code": ve.error_code,
                 "message": ve.message,
                 "errors": ve.errors,
             },

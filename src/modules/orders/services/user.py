@@ -27,7 +27,7 @@ class OrderUserService(BaseService):
         self.logger = logger
 
     async def create_order(self, user_id: int, create_order: OrderCreate) -> OrderResponse:
-        total_amount = 0
+        total_amount: float = 0.0
         order_products: list[OrderProduct] = []
 
         for item in create_order.items:
@@ -68,7 +68,7 @@ class OrderUserService(BaseService):
         )
 
         orders, total = await self.order_repo.paginate_filters(filter_options)
-        PaginatedResponse[OrderResponse](
+        return PaginatedResponse[OrderResponse](
             data=orders,
             meta=self.setup_pagination_meta(
                 total=total, page_size=query_params.page_size, page=query_params.page

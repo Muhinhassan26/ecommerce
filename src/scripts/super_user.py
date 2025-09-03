@@ -6,10 +6,10 @@ from src.core.security import PasswordHandler
 from src.modules.users.models import User
 
 
-async def create_superadmin():
+async def create_superadmin() -> None:
     async with async_session() as session:
         # check if superadmin already exists
-        result = await session.execute(select(User).where(User.is_superadmin is True))
+        result = await session.execute(select(User).where(User.is_superadmin == True))  # noqa: E712
         admin = result.scalar_one_or_none()
         if admin:
             print("Superadmin already exists:", admin.username)

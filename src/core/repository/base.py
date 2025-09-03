@@ -45,8 +45,9 @@ class BaseRepository(Generic[ModelType]):  # noqa: UP046
             result.append(getattr(field, direction)())
         return result
 
-    def _build_filters(self, filters: dict[str, Any]) -> list[Any]:
+    def _build_filters(self, filters: dict[str, Any] | None = None) -> list[Any]:
         """Build list of WHERE conditions."""
+        filters = filters or {}
         result = []
         for expression, value in filters.items():
             parts = expression.split("__")
@@ -242,7 +243,7 @@ class BaseRepository(Generic[ModelType]):  # noqa: UP046
         return obj
 
     async def update_obj(
-        self, where: dict[str, Any], values: dict[str, Any]
+        self, where: dict[str, Any] | None, values: dict[str, Any] | None
     ) -> tuple[ModelType, int] | None:
         session = self.session
         filters = self._build_filters(where)
@@ -260,8 +261,10 @@ class BaseRepository(Generic[ModelType]):  # noqa: UP046
         query = update(self.model).where(and_(True, *filters)).values(**update_values)
         result = await session.execute(query)
         await session.commit()
-        row = result.scalars().one_or_none()  # list of updated model instances
+        row = result.scalars().one_or_none()
         rowcount = result.rowcount
+        if row is None:
+            return None
         return row, rowcount
 
     async def create_and_update(
