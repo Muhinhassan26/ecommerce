@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager, contextmanager
 import psycopg
 from psycopg.rows import dict_row
 from src.core.config import settings
-from src.core.error.exceptions import DatabaseError
+from src.core.error.exceptions import DatabaseException
 
 
 @contextmanager
@@ -19,7 +19,7 @@ def get_conn() -> Generator[psycopg.Connection, None, None]:
     except Exception as e:
         if conn:
             conn.rollback()
-        raise DatabaseError from e
+        raise DatabaseException from e
     finally:
         if conn:
             conn.close()  # pylint: disable=no-member
@@ -37,7 +37,7 @@ async def get_async_conn() -> AsyncGenerator[psycopg.AsyncConnection, None]:
     except Exception as e:
         if conn:
             await conn.rollback()
-        raise DatabaseError from e
+        raise DatabaseException from e
     finally:
         if conn:
             await conn.close()
