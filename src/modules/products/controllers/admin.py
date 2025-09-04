@@ -1,7 +1,9 @@
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends
+from src.core.decorators import check_user_perm
 from src.core.dependencies import CommonQueryParam
+from src.core.helpers.enums import UserRole
 from src.core.schemas.common import PaginatedResponse, QueryParams
 from src.modules.products.schemas import ProductCreate, ProductResponse, ProductUpdate
 from src.modules.products.services.admin import ProductAdminService
@@ -12,13 +14,14 @@ router = APIRouter(
 
 
 @router.get("/", response_model=PaginatedResponse[ProductResponse])
+@check_user_perm([UserRole.PRODUCT_MANAGER.value])
 async def get_products(
     product_service: Annotated[ProductAdminService, Depends(ProductAdminService)],
-    query_paramas: QueryParams = Depends(
+    query_params: QueryParams = Depends(
         CommonQueryParam(filter_fields=["is_active", "category", "name"])
     ),
 ) -> Any:
-    return await product_service.get_products(query_params=query_paramas)
+    return await product_service.get_products(query_params=query_params)
 
 
 @router.get("/{product_id}", response_model=ProductResponse)
