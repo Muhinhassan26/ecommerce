@@ -1,7 +1,9 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
+from src.core.decorators import check_user_perm
 from src.core.dependencies.query_params import CommonQueryParam
+from src.core.helpers.enums import UserRole
 from src.core.schemas.common import PaginatedResponse, QueryParams
 from src.modules.users.schemas import CreateAdmin, ResponseMessage, UpdateUser, UserResponse
 from src.modules.users.services import AdminService
@@ -17,7 +19,9 @@ router = APIRouter(prefix="/user")
 
 
 @router.get("/", response_model=PaginatedResponse[UserResponse])
+@check_user_perm([UserRole.ADMIN.value])
 async def get_users(  # noqa: F811
+    request: Request,  # noqa: ARG001
     admin_service: Annotated[AdminService, Depends(AdminService)],
     query_params: QueryParams = Depends(CommonQueryParam(filter_fields=["username", "email"])),
 ) -> PaginatedResponse[UserResponse]:
@@ -25,7 +29,9 @@ async def get_users(  # noqa: F811
 
 
 @router.get("/{user_id}", response_model=UserResponse)
+@check_user_perm([UserRole.ADMIN.value])
 async def get_user_by_id(
+    request: Request,  # noqa: ARG001
     user_id: int,
     admin_service: Annotated[AdminService, Depends(AdminService)],
 ) -> UserResponse:
@@ -34,7 +40,9 @@ async def get_user_by_id(
 
 
 @router.patch("/{user_id}", response_model=ResponseMessage)
+@check_user_perm([UserRole.ADMIN.value])
 async def update_user(
+    Request: Request,  # noqa: ARG001, N803
     user_id: int,
     update_user: UpdateUser,
     admin_service: Annotated[AdminService, Depends(AdminService)],
@@ -44,7 +52,10 @@ async def update_user(
 
 
 @router.post("/", response_model=ResponseMessage)
+@check_user_perm([UserRole.ADMIN.value])
 async def create_admin(
-    create_admin: CreateAdmin, admin_service: Annotated[AdminService, Depends(AdminService)]
+    request: Request,  # noqa: ARG001
+    create_admin: CreateAdmin,
+    admin_service: Annotated[AdminService, Depends(AdminService)],
 ) -> ResponseMessage:
     return await admin_service._create_admin(create_admin=create_admin)

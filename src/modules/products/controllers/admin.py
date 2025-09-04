@@ -1,6 +1,6 @@
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from src.core.decorators import check_user_perm
 from src.core.dependencies import CommonQueryParam
 from src.core.helpers.enums import UserRole
@@ -16,6 +16,7 @@ router = APIRouter(
 @router.get("/", response_model=PaginatedResponse[ProductResponse])
 @check_user_perm([UserRole.PRODUCT_MANAGER.value])
 async def get_products(
+    request: Request,  # noqa: ARG001
     product_service: Annotated[ProductAdminService, Depends(ProductAdminService)],
     query_params: QueryParams = Depends(
         CommonQueryParam(filter_fields=["is_active", "category", "name"])
@@ -25,7 +26,9 @@ async def get_products(
 
 
 @router.get("/{product_id}", response_model=ProductResponse)
+@check_user_perm([UserRole.PRODUCT_MANAGER.value])
 async def get_product_by_id(
+    request: Request,  # noqa: ARG001
     product_id: int,
     product_service: Annotated[ProductAdminService, Depends(ProductAdminService)],
 ) -> Any:
@@ -33,7 +36,9 @@ async def get_product_by_id(
 
 
 @router.post("/", response_model=ProductResponse)
+@check_user_perm([UserRole.PRODUCT_MANAGER.value])
 async def create_product(
+    request: Request,  # noqa: ARG001
     product: ProductCreate,
     product_service: Annotated[ProductAdminService, Depends(ProductAdminService)],
 ) -> Any:
@@ -41,7 +46,9 @@ async def create_product(
 
 
 @router.patch("/{product_id}", response_model=ProductResponse)
+@check_user_perm([UserRole.PRODUCT_MANAGER.value])
 async def update_product(
+    request: Request,  # noqa: ARG001
     product_id: int,
     product_update: ProductUpdate,
     product_service: Annotated[ProductAdminService, Depends(ProductAdminService)],
@@ -52,7 +59,9 @@ async def update_product(
 
 
 @router.delete("/{product_id}", response_model=ProductResponse)
+@check_user_perm([UserRole.PRODUCT_MANAGER.value])
 async def delete_product(
+    request: Request,  # noqa: ARG001
     product_id: int,
     product_service: Annotated[ProductAdminService, Depends(ProductAdminService)],
 ) -> Any:

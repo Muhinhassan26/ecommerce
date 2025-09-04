@@ -16,11 +16,13 @@ class ProductUserService(BaseService):
         self.product_repo = product_repo
         self.logger = logger
 
-    async def get_product_by_id(
-        self,
-        product_id: int,
-    ) -> ProductResponse | None:
-        product = await self.product_repo.get_by_id(obj_id=product_id)
+    async def get_product_by_id(self, product_id: int, user_id: int) -> ProductResponse | None:
+        filter_options = FilterOptions(
+            filters={
+                "user_id": user_id,
+            }
+        )
+        product = await self.product_repo.filter(obj_id=product_id, filter_options=filter_options)
 
         if not product:
             logger.error(msg=f"Product with id {product_id} is not available")
@@ -30,9 +32,10 @@ class ProductUserService(BaseService):
 
     async def get_paginate_product(
         self,
+        user_id,
         query_params: QueryParams,
     ) -> PaginatedResponse[ProductResponse]:
-        filters = {}
+        filters = {"user_id": user_id}
 
         if query_params.filter_params:
             filters.update(query_params.filter_params)

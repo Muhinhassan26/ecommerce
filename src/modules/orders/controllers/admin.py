@@ -1,8 +1,9 @@
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
+from src.core.decorators import check_user_perm
 from src.core.dependencies import CommonQueryParam
-from src.core.helpers.enums import OrderStatus
+from src.core.helpers.enums import OrderStatus, UserRole
 from src.core.schemas.common import PaginatedResponse, QueryParams
 from src.modules.orders.schemas import OrderResponse
 from src.modules.orders.services.admin import OrderAdminService
@@ -11,7 +12,9 @@ router = APIRouter(prefix="/orders")
 
 
 @router.get("/", response_model=PaginatedResponse[OrderResponse])
+@check_user_perm([UserRole.ORDER_MANAGER.value])
 async def list_orders(
+    request: Request,  # noqa: ARG001
     service: Annotated[OrderAdminService, Depends(OrderAdminService)],
     query_params: QueryParams = Depends(
         CommonQueryParam(filter_fields=["status", "user_id", "created_at"])
@@ -23,7 +26,9 @@ async def list_orders(
 
 
 @router.get("/{order_id}", response_model=OrderResponse)
+@check_user_perm([UserRole.ORDER_MANAGER.value])
 async def get_order_detail(
+    request: Request,  # noqa: ARG001
     order_id: int,
     service: Annotated[OrderAdminService, Depends(OrderAdminService)],
 ) -> Any:
@@ -31,7 +36,9 @@ async def get_order_detail(
 
 
 @router.patch("/{order_id}/status", response_model=OrderResponse)
+@check_user_perm([UserRole.ORDER_MANAGER.value])
 async def update_order_status(
+    request: Request,  # noqa: ARG001
     order_id: int,
     status: OrderStatus,
     service: Annotated[OrderAdminService, Depends(OrderAdminService)],

@@ -74,10 +74,16 @@ class BaseRepository(Generic[ModelType]):  # noqa: UP046
         obj_id: int,
         filter_options: FilterOptions | None = None,
     ) -> ModelType | None:
-        query = self._get_query(prefetch=filter_options.prefetch).where(self.model.id == obj_id)  # type:ignore
+        query = self._get_query(prefetch=filter_options.prefetch if filter_options else None).where(
+            self.model.id == obj_id
+        )
 
-        session = self.session
-        result = await session.execute(query)
+        if filter_options and filter_options.filters:
+            for field, value in filter_options.filters.items():
+                if hasattr(self.model, field):
+                    query = query.where(getattr(self.model, field) == value)
+
+        result = await self.session.execute(query)
         return result.scalars().first()
 
     async def list_all(
