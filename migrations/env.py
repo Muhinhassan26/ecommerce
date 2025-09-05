@@ -3,6 +3,8 @@ from logging.config import fileConfig
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 from src.modules.users.models import User  # noqa: F401
+from src.modules.orders.models import Order,OrderProduct
+from src.modules.products.models import Product
 from src.core.db import Base
 from src.core.config import settings
 from alembic import context

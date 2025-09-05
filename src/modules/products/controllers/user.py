@@ -17,7 +17,7 @@ async def get_product_by_id(
     product_id: int,
     product_service: Annotated[ProductUserService, Depends(ProductUserService)],
 ) -> Any:
-    user_id = request.state.user_id
+    user_id = request.state.user["user_id"]
     return await product_service.get_product_by_id(product_id=product_id, user_id=user_id)
 
 
@@ -29,5 +29,5 @@ async def get_products_paginated(
         CommonQueryParam(filter_fields=["search", "is_active", "category", "name"])
     ),
 ) -> Any:
-    user_id = request.state.user_id
+    user_id = request.state.user["user_id"]
     return await product_service.get_paginate_product(user_id=user_id, query_params=query_params)

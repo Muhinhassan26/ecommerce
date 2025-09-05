@@ -2,7 +2,10 @@ import asyncio
 
 from sqlalchemy import select
 from src.core.db.connection import async_session
+from src.core.helpers.enums import UserRole
 from src.core.security import PasswordHandler
+from src.modules.orders.models import Order, OrderProduct  # noqa
+from src.modules.products.models import Product  # noqa
 from src.modules.users.models import User
 
 
@@ -21,11 +24,11 @@ async def create_superadmin() -> None:
             last_name="Admin",
             email="superadmin@gmail.com",
             username="superadmin",
-            password=PasswordHandler.hash("supersecurepassword"),
+            password=PasswordHandler.hash("superadmin"),
             is_active=True,
             is_staff=True,
             is_superadmin=True,
-            role="admin",
+            role=UserRole.ADMIN,
         )
         session.add(superadmin)
         await session.commit()
