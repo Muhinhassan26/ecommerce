@@ -19,7 +19,7 @@ router = APIRouter(prefix="/user")
 
 
 @router.get("/", response_model=PaginatedResponse[UserResponse])
-@check_user_perm([UserRole.ADMIN.value])
+@check_user_perm([UserRole.ADMIN.value, UserRole.SUPER_ADMIN.value])
 async def get_users(  # noqa: F811
     request: Request,  # noqa: ARG001
     admin_service: Annotated[AdminService, Depends(AdminService)],
@@ -29,20 +29,19 @@ async def get_users(  # noqa: F811
 
 
 @router.get("/{user_id}", response_model=UserResponse)
-@check_user_perm([UserRole.ADMIN.value])
+@check_user_perm([UserRole.ADMIN.value, UserRole.SUPER_ADMIN.value])
 async def get_user_by_id(
     request: Request,  # noqa: ARG001
     user_id: int,
     admin_service: Annotated[AdminService, Depends(AdminService)],
 ) -> UserResponse:
-    user = await admin_service.get_user_by_id(user_id=user_id)
-    return UserResponse.model_validate(user)
+    return await admin_service.get_user_by_id(user_id=user_id)
 
 
 @router.patch("/{user_id}", response_model=ResponseMessage)
-@check_user_perm([UserRole.ADMIN.value])
+@check_user_perm([UserRole.ADMIN.value, UserRole.SUPER_ADMIN.value])
 async def update_user(
-    Request: Request,  # noqa: ARG001, N803
+    request: Request,  # noqa: ARG001, N803
     user_id: int,
     update_user: UpdateUser,
     admin_service: Annotated[AdminService, Depends(AdminService)],
@@ -52,7 +51,7 @@ async def update_user(
 
 
 @router.post("/", response_model=ResponseMessage)
-@check_user_perm([UserRole.ADMIN.value])
+@check_user_perm([UserRole.SUPER_ADMIN.value])
 async def create_admin(
     request: Request,  # noqa: ARG001
     create_admin: CreateAdmin,

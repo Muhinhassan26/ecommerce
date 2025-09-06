@@ -45,18 +45,19 @@ class AdminService(BaseService):
             ),
         )
 
-    async def get_user_by_id(self, user_id: int) -> User | None:
-        return await self.user_repository.get_by_id(obj_id=user_id)
+    async def get_user_by_id(self, user_id: int) -> UserResponse | None:
+        user = await self.user_repository.get_by_id(obj_id=user_id)
+        return UserResponse.model_validate(user)
 
     async def update_user(self, user_id: int, update_user: UpdateUser) -> None:
         filters = {"id": user_id}
-        updated_user = await self.user_repository.update_obj(
+        row = await self.user_repository.update_obj(
             where=filters,
             values=update_user.model_dump(
-                exclude_none=True,
+                exclude_unset=True,
             ),
         )
-        if updated_user == 0:
+        if not row:
             logger.warning(f"User update failed:  user_id={user_id}")
             raise NotFoundException(message=ERROR_MAPPER[NO_DATA])
 
@@ -65,8 +66,9 @@ class AdminService(BaseService):
     async def _create_admin(self, create_admin: CreateAdmin) -> ResponseMessage:
         admin = await self.user_repository.create(
             obj=User(
-                **create_admin.model_dump(exclude={"password"}),
+                **create_admin.model_dump(exclude={"password", "role"}),
                 password=PasswordHandler.hash(create_admin.password),
+                role=create_admin.role.value,
             )
         )
         logger.info(f"Admin created:  user_id={admin.id}")

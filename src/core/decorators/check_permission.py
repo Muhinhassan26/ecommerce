@@ -8,7 +8,7 @@ def check_user_perm(allowed_roles: list[str]):
     def decorator(func):
         @wraps(func)
         async def wrapper(request: Request, *args, **kwargs):
-            user_id = request.state.user["id"]
+            user_id = request.state.user["user_id"]
 
             with get_conn() as conn:
                 with conn.cursor() as cur:

@@ -7,10 +7,9 @@ class UpdateUser(BaseModel):
     last_name: str | None = None
     email: str | None = None
     username: str | None = None
-    password: str | None = None
-    is_active: str | None = None
-    is_staff: str | None = None
-    is_superadmin: str | None = None
+    is_active: bool | None = None
+    is_staff: bool | None = None
+    is_superadmin: bool | None = None
     role: UserRole | None = None
 
 
@@ -36,6 +35,8 @@ class UserResponse(BaseModel):
     is_staff: bool
     is_superadmin: bool
     role: str | None = None
+
+    model_config = {"from_attributes": True}
 
 
 class UpdateProfile(BaseModel):

@@ -12,7 +12,7 @@ router = APIRouter(prefix="/orders")
 
 
 @router.get("/", response_model=PaginatedResponse[OrderResponse])
-@check_user_perm([UserRole.ORDER_MANAGER.value])
+@check_user_perm([UserRole.ORDER_MANAGER.value, UserRole])
 async def list_orders(
     request: Request,  # noqa: ARG001
     service: Annotated[OrderAdminService, Depends(OrderAdminService)],

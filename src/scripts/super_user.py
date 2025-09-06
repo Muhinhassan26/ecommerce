@@ -17,18 +17,23 @@ async def create_superadmin() -> None:
         if admin:
             print("Superadmin already exists:", admin.username)
             return
+        first_name = input("Enter first name: ")
+        last_name = input("Enter last name: ")
+        email = input("Enter email: ")
+        username = input("Enter username: ")
+        password = input("Enter password: ")
 
         # create new superadmin
         superadmin = User(
-            first_name="Super",
-            last_name="Admin",
-            email="superadmin@gmail.com",
-            username="superadmin",
-            password=PasswordHandler.hash("superadmin"),
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            username=username,
+            password=PasswordHandler.hash(password=password),
             is_active=True,
             is_staff=True,
             is_superadmin=True,
-            role=UserRole.ADMIN,
+            role=UserRole.SUPER_ADMIN.value,
         )
         session.add(superadmin)
         await session.commit()

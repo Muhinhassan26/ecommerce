@@ -248,16 +248,43 @@ class BaseRepository(Generic[ModelType]):  # noqa: UP046
         await session.refresh(obj)
         return obj
 
+    # async def update_obj(
+    #     self, where: dict[str, Any] | None, values: dict[str, Any] | None
+    # ) -> tuple[ModelType, int] | bool | None:
+    #     session = self.session
+    #     filters = self._build_filters(where)
+
+    #     # Convert column names to strings for `values`
+    #     update_values = {}
+    #     for key, value in values.items():
+    #         if isinstance(value, dict) and isinstance(getattr(self.model, key).type, JSON):
+    #             update_values[key] = cast(getattr(self.model, key), JSONB).concat(
+    #                 cast(value, JSONB)
+    #             )
+    #         else:
+    #             update_values[key] = value
+
+    #     query = update(self.model).where(and_(True, *filters)).values(**update_values).returning
+    #     result = await session.execute(query)
+    #     await session.commit()
+
+    #     if result.rowcount == 0:
+    #         return None
+    #     return True
+
     async def update_obj(
         self, where: dict[str, Any] | None, values: dict[str, Any] | None
-    ) -> tuple[ModelType, int] | None:
+    ) -> int | None:
+        if not where or not values:
+            return None
+
         session = self.session
         filters = self._build_filters(where)
 
-        # Convert column names to strings for `values`
         update_values = {}
         for key, value in values.items():
-            if isinstance(value, dict) and isinstance(getattr(self.model, key).type, JSON):
+            column = getattr(self.model, key).property.columns[0]
+            if isinstance(value, dict) and isinstance(column.type, (JSONB, JSON)):  # noqa: UP038
                 update_values[key] = cast(getattr(self.model, key), JSONB).concat(
                     cast(value, JSONB)
                 )
@@ -265,13 +292,13 @@ class BaseRepository(Generic[ModelType]):  # noqa: UP046
                 update_values[key] = value
 
         query = update(self.model).where(and_(True, *filters)).values(**update_values)
+
         result = await session.execute(query)
         await session.commit()
-        row = result.scalars().one_or_none()
-        rowcount = result.rowcount
-        if row is None:
+        if result.rowcount == 0:
             return None
-        return row, rowcount
+
+        return result.rowcount
 
     async def create_and_update(
         self,
