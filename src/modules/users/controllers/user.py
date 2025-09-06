@@ -12,8 +12,7 @@ async def get_profile(
     request: Request, user_service: Annotated[UserService, Depends(UserService)]
 ) -> GetProfile:
     user_id = request.state.user.get("user_id")
-    profile = await user_service.get_profile(user_id=user_id)
-    return GetProfile.model_validate(profile)
+    return await user_service.get_profile(user_id=int(user_id))
 
 
 @router.patch("/update-profile/", response_model=ResponseMessage)
@@ -23,7 +22,7 @@ async def update_profile(
     user_service: Annotated[UserService, Depends(UserService)],
 ) -> ResponseMessage:
     user_id = request.state.user.get("user_id")
-    await user_service.update_profile(user_id=user_id, update_profile=update_profile)
+    await user_service.update_profile(user_id=int(user_id), update_profile=update_profile)
     return ResponseMessage(message="Profile updated successfully")
 
 
@@ -34,5 +33,5 @@ async def change_password(
     user_service: Annotated[UserService, Depends(UserService)],
 ) -> ResponseMessage:
     user_id = request.state.user.get("user_id")
-    await user_service.update_password(user_id=user_id, new_password=new_password)
+    await user_service.update_password(user_id=int(user_id), new_password=new_password)
     return ResponseMessage(message="Password changed successfully")

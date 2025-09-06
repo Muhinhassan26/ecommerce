@@ -44,6 +44,7 @@ class UpdateProfile(BaseModel):
     last_name: str | None = None
     email: EmailStr | None = None
     username: str | None = None
+    model_config = {"from_attributes": True}
 
 
 class GetProfile(BaseModel):
@@ -53,10 +54,13 @@ class GetProfile(BaseModel):
     email: EmailStr
     username: str
     is_active: bool
+    model_config = {"from_attributes": True}
 
 
 class ChangePassword(BaseModel):
+    current_password: str
     new_password: str
+    model_config = {"from_attributes": True}
 
 
 class ResponseMessage(BaseModel):
