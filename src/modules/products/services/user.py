@@ -1,8 +1,8 @@
 from typing import Annotated
 
 from fastapi import Depends
-from src.core.error.codes import NO_DATA
-from src.core.error.exceptions import NotFoundException
+from src.core.error.codes import INVALID_CRED, NO_DATA
+from src.core.error.exceptions import InvalidCredentialsException, NotFoundException
 from src.core.error.format_error import ERROR_MAPPER
 from src.core.logger import logger
 from src.core.schemas.common import FilterOptions, PaginatedResponse, QueryParams
@@ -16,13 +16,18 @@ class ProductUserService(BaseService):
         self.product_repo = product_repo
         self.logger = logger
 
-    async def get_product_by_id(self, product_id: int, user_id: int) -> ProductResponse | None:
-        filter_options = FilterOptions(
-            filters={
-                "user_id": user_id,
-            }
+    async def get_product_by_id(
+        self,
+        product_id: int,
+        user_id: int,
+    ) -> ProductResponse | None:
+        if not user_id:
+            logger.error(msg="Invalid Credentials")
+            raise InvalidCredentialsException(message=ERROR_MAPPER[INVALID_CRED])
+
+        product = await self.product_repo.get_by_id(
+            obj_id=product_id,
         )
-        product = await self.product_repo.filter(obj_id=product_id, filter_options=filter_options)
 
         if not product:
             logger.error(msg=f"Product with id {product_id} is not available")
@@ -35,7 +40,11 @@ class ProductUserService(BaseService):
         user_id,
         query_params: QueryParams,
     ) -> PaginatedResponse[ProductResponse]:
-        filters = {"user_id": user_id}
+        if not user_id:
+            logger.error(msg="Invalid Credentials")
+            raise InvalidCredentialsException(message=ERROR_MAPPER[INVALID_CRED])
+
+        filters = {}
 
         if query_params.filter_params:
             filters.update(query_params.filter_params)
@@ -54,7 +63,7 @@ class ProductUserService(BaseService):
 
         return PaginatedResponse(
             data=products,
-            meta=self.setup_pagination_meta(
+            meta=await self.setup_pagination_meta(
                 total=total,
                 page_size=query_params.page_size,
                 page=query_params.page,
