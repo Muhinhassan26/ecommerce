@@ -47,6 +47,7 @@ class PaginationMeta(BaseModel):
 class PaginatedResponse(BaseModel, Generic[T]):  # noqa
     data: Sequence[T]
     meta: PaginationMeta
+    model_config = {"from_attributes": True}
 
 
 class ResponseMessage(BaseModel):

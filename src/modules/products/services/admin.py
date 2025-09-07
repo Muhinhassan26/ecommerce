@@ -36,7 +36,7 @@ class ProductAdminService(BaseService):
 
         return PaginatedResponse(
             data=products,
-            meta=self.setup_pagination_meta(
+            meta=await self.setup_pagination_meta(
                 total=total,
                 page_size=query_params.page_size,
                 page=query_params.page,
@@ -70,18 +70,20 @@ class ProductAdminService(BaseService):
         filters = {"id": product_id}
 
         result = await self.product_repo.update_obj(
-            where=filters, values=update_product.model_dump(exclude_none=True)
+            where=filters,
+            values=update_product.model_dump(
+                exclude_none=True,
+                exclude_unset=True,
+            ),
         )
-        if not result:
-            return None
-        updated, total = result
 
-        if total == 0:
+        if not result:
             self.logger.warning(f"Product update failed: product_id={product_id}")
             raise NotFoundException(message=ERROR_MAPPER[NO_DATA])
+        updated_product = await self.product_repo.get_by_id(obj_id=product_id)
 
         self.logger.info(f"Product updated: product_id={product_id}")
-        return ProductResponse.model_validate(updated)
+        return ProductResponse.model_validate(updated_product)
 
     async def delete_product(self, product_id: int) -> None:
         filters = {"id": product_id}

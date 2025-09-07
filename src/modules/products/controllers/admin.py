@@ -5,7 +5,12 @@ from src.core.decorators import check_user_perm
 from src.core.dependencies import CommonQueryParam
 from src.core.helpers.enums import UserRole
 from src.core.schemas.common import PaginatedResponse, QueryParams
-from src.modules.products.schemas import ProductCreate, ProductResponse, ProductUpdate
+from src.modules.products.schemas import (
+    ProductCreate,
+    ProductResponse,
+    ProductUpdate,
+    ResponseMessage,
+)
 from src.modules.products.services.admin import ProductAdminService
 
 router = APIRouter(
@@ -14,7 +19,7 @@ router = APIRouter(
 
 
 @router.get("/", response_model=PaginatedResponse[ProductResponse])
-@check_user_perm([UserRole.PRODUCT_MANAGER.value])
+@check_user_perm([UserRole.PRODUCT_MANAGER.value, UserRole.SUPER_ADMIN.value])
 async def get_products(
     request: Request,  # noqa: ARG001
     product_service: Annotated[ProductAdminService, Depends(ProductAdminService)],
@@ -26,7 +31,7 @@ async def get_products(
 
 
 @router.get("/{product_id}", response_model=ProductResponse)
-@check_user_perm([UserRole.PRODUCT_MANAGER.value])
+@check_user_perm([UserRole.PRODUCT_MANAGER.value, UserRole.SUPER_ADMIN.value])
 async def get_product_by_id(
     request: Request,  # noqa: ARG001
     product_id: int,
@@ -36,7 +41,7 @@ async def get_product_by_id(
 
 
 @router.post("/", response_model=ProductResponse)
-@check_user_perm([UserRole.PRODUCT_MANAGER.value])
+@check_user_perm([UserRole.PRODUCT_MANAGER.value, UserRole.SUPER_ADMIN.value])
 async def create_product(
     request: Request,  # noqa: ARG001
     product: ProductCreate,
@@ -46,7 +51,7 @@ async def create_product(
 
 
 @router.patch("/{product_id}", response_model=ProductResponse)
-@check_user_perm([UserRole.PRODUCT_MANAGER.value])
+@check_user_perm([UserRole.PRODUCT_MANAGER.value, UserRole.SUPER_ADMIN.value])
 async def update_product(
     request: Request,  # noqa: ARG001
     product_id: int,
@@ -58,11 +63,12 @@ async def update_product(
     )
 
 
-@router.delete("/{product_id}", response_model=ProductResponse)
-@check_user_perm([UserRole.PRODUCT_MANAGER.value])
+@router.delete("/{product_id}", response_model=ResponseMessage)
+@check_user_perm([UserRole.PRODUCT_MANAGER.value, UserRole.SUPER_ADMIN.value])
 async def delete_product(
     request: Request,  # noqa: ARG001
     product_id: int,
     product_service: Annotated[ProductAdminService, Depends(ProductAdminService)],
 ) -> Any:
-    return await product_service.delete_product(product_id=product_id)
+    await product_service.delete_product(product_id=product_id)
+    return ResponseMessage(message=f"Product with id {product_id} is deleted!!!!")

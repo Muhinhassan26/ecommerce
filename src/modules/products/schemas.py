@@ -15,9 +15,18 @@ class ProductCreate(ProductBase):
     pass
 
 
-class ProductUpdate(ProductBase):
-    pass
+class ProductUpdate(BaseModel):
+    name: str | None = None
+    description: str | None = None
+    price: float | None = None
+    stock: int | None = None
+    is_active: bool | None = None
+    category: str | None = None
 
 
 class ProductResponse(ProductBase):
     id: int
+
+
+class ResponseMessage(BaseModel):
+    message: str
