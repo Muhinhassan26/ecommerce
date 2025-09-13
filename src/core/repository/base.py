@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from sqlalchemy import JSON, Select, and_, cast, delete, func, or_, select, update
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import RelationshipProperty, joinedload, selectinload
+from sqlalchemy.orm import Load, RelationshipProperty, joinedload, selectinload
 from src.core.db import ModelType, operators_map
 from src.core.schemas.common import FilterOptions
 
@@ -15,6 +15,27 @@ class BaseRepository(Generic[ModelType]):  # noqa: UP046
         self.model = model
         self.session = session
 
+    # def _get_query(
+    #     self,
+    #     prefetch: tuple[str, ...] | None = None,
+    #     options: list[Any] | None = None,
+    # ) -> Select[tuple[ModelType]]:
+    #     query = select(self.model)
+
+    #     if prefetch:
+    #         if options is None:
+    #             options = []
+    #         for relation in prefetch:
+    #             attr = getattr(self.model, relation)
+
+    #             if hasattr(attr, "property") and isinstance(attr.property, RelationshipProperty):
+    #                 if attr.property.uselist:
+    #                     options.append(selectinload(attr))
+    #                 else:
+    #                     options.append(joinedload(attr))
+    #         query = query.options(*options).execution_options(populate_existing=True)
+
+    #     return query
     def _get_query(
         self,
         prefetch: tuple[str, ...] | None = None,
@@ -25,14 +46,45 @@ class BaseRepository(Generic[ModelType]):  # noqa: UP046
         if prefetch:
             if options is None:
                 options = []
-            for relation in prefetch:
-                attr = getattr(self.model, relation)
 
-                if hasattr(attr, "property") and isinstance(attr.property, RelationshipProperty):
-                    if attr.property.uselist:
-                        options.append(selectinload(attr))
-                    else:
-                        options.append(joinedload(attr))
+            for relation in prefetch:
+                if "." in relation:
+                    parts = relation.split(".")
+                    loader: Load | None = None
+                    current_model = self.model
+
+                    for idx, part in enumerate(parts):
+                        attr = getattr(current_model, part)
+                        if idx == 0:
+                            if hasattr(attr, "property") and isinstance(
+                                attr.property, RelationshipProperty
+                            ):
+                                loader = (
+                                    selectinload(attr)
+                                    if attr.property.uselist
+                                    else joinedload(attr)
+                                )
+                        else:
+                            loader = loader.selectinload(attr)  # type: ignore
+
+                        if hasattr(attr, "property") and isinstance(
+                            attr.property, RelationshipProperty
+                        ):
+                            current_model = attr.property.mapper.class_
+
+                    if loader is not None:
+                        options.append(loader)
+
+                else:
+                    attr = getattr(self.model, relation)
+                    if hasattr(attr, "property") and isinstance(
+                        attr.property, RelationshipProperty
+                    ):
+                        if attr.property.uselist:
+                            options.append(selectinload(attr))
+                        else:
+                            options.append(joinedload(attr))
+
             query = query.options(*options).execution_options(populate_existing=True)
 
         return query

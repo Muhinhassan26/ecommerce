@@ -9,14 +9,18 @@ from src.core.schemas.common import FilterOptions, PaginatedResponse, QueryParam
 from src.core.service.base_service import BaseService
 from src.modules.orders.repository import OrderRepository
 from src.modules.orders.schemas import OrderResponse
+from src.modules.products.repository import ProductRepository
 
 
 class OrderAdminService(BaseService):
     def __init__(
         self,
         order_repo: Annotated[OrderRepository, Depends(OrderRepository)],
+        product_repo: Annotated[ProductRepository, Depends(ProductRepository)],
     ):
         self.order_repo = order_repo
+        self.product_repo = product_repo
+
         self.logger = logger
 
     async def list_orders(
@@ -49,7 +53,9 @@ class OrderAdminService(BaseService):
         )
 
     async def get_order_detail(self, order_id: int) -> OrderResponse:
-        filter_options = FilterOptions(filters={"id": order_id}, prefetch=("order_products",))
+        filter_options = FilterOptions(
+            filters={"id": order_id}, prefetch=("order_products", "prod")
+        )
         order = await self.order_repo.get_by_filed(filter_options)
         if not order:
             raise NotFoundException(message=ERROR_MAPPER[NO_DATA])
@@ -63,9 +69,21 @@ class OrderAdminService(BaseService):
     async def update_order_status(self, order_id: int, status: OrderStatus) -> OrderResponse:
         filter_options = FilterOptions(
             filters={"id": order_id},
-            prefetch=("order_products",),
+            prefetch=(
+                "order_products",
+                "order_products.product",
+            ),
         )
         order = await self.order_repo.get_by_filed(filter_options)
+        if not order:
+            raise NotFoundException(message=ERROR_MAPPER[NO_DATA])
+        if status == OrderStatus.APPROVED:
+            for item in order.order_products:
+                product = item.product
+                product.stock -= item.quantity
+                await self.product_repo.update_obj(
+                    where={"id": product.id}, values={"stock": product.stock}
+                )
         for item in order.order_products:
             item.price = float(item.price)
             item.total_price = float(item.total_price)
