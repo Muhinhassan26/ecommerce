@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager, contextmanager
 
 import psycopg
 from psycopg.rows import dict_row
+from sqlalchemy.exc import SQLAlchemyError
 from src.core.config import settings
 from src.core.error.exceptions import DatabaseException
 
@@ -16,7 +17,7 @@ def get_conn() -> Generator[psycopg.Connection, None, None]:
             row_factory=dict_row,
         )
         yield conn
-    except Exception as e:
+    except SQLAlchemyError as e:
         if conn:
             conn.rollback()
         raise DatabaseException from e

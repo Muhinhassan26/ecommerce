@@ -134,8 +134,12 @@ class BaseRepository(Generic[ModelType]):  # noqa: UP046
             if or_conditions:
                 combined_conditions.append(or_(*or_conditions))
             final_condition = and_(*combined_conditions) if combined_conditions else None
+
+        if final_condition is not None:
+            query = query.where(final_condition)
+
         session = self.session
-        db_execute = await session.execute(query.where(final_condition))  # type: ignore
+        db_execute = await session.execute(query)
         return db_execute.scalars().first()
 
     async def filter(

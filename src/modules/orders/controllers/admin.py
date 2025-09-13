@@ -12,7 +12,12 @@ router = APIRouter(prefix="/orders")
 
 
 @router.get("/", response_model=PaginatedResponse[OrderResponse])
-@check_user_perm([UserRole.ORDER_MANAGER.value, UserRole.SUPER_ADMIN.value])
+@check_user_perm(
+    [
+        UserRole.ORDER_MANAGER.value,
+        UserRole.SUPER_ADMIN.value,
+    ]
+)
 async def list_orders(
     request: Request,  # noqa: ARG001
     service: Annotated[OrderAdminService, Depends(OrderAdminService)],
@@ -26,7 +31,12 @@ async def list_orders(
 
 
 @router.get("/{order_id}", response_model=OrderResponse)
-@check_user_perm([UserRole.ORDER_MANAGER.value])
+@check_user_perm(
+    [
+        UserRole.ORDER_MANAGER.value,
+        UserRole.SUPER_ADMIN.value,
+    ]
+)
 async def get_order_detail(
     request: Request,  # noqa: ARG001
     order_id: int,
@@ -36,7 +46,12 @@ async def get_order_detail(
 
 
 @router.patch("/{order_id}/status", response_model=OrderResponse)
-@check_user_perm([UserRole.ORDER_MANAGER.value])
+@check_user_perm(
+    [
+        UserRole.ORDER_MANAGER.value,
+        UserRole.SUPER_ADMIN.value,
+    ]
+)
 async def update_order_status(
     request: Request,  # noqa: ARG001
     order_id: int,

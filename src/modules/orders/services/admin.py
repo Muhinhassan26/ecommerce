@@ -53,19 +53,32 @@ class OrderAdminService(BaseService):
         order = await self.order_repo.get_by_filed(filter_options)
         if not order:
             raise NotFoundException(message=ERROR_MAPPER[NO_DATA])
+        for item in order.order_products:
+            item.price = float(item.price)
+            item.total_price = float(item.total_price)
+
+        order.total_amount = float(order.total_amount)
         return OrderResponse.model_validate(order)
 
     async def update_order_status(self, order_id: int, status: OrderStatus) -> OrderResponse:
-        filter_options = FilterOptions(filters={"id": order_id})
+        filter_options = FilterOptions(
+            filters={"id": order_id},
+            prefetch=("order_products",),
+        )
         order = await self.order_repo.get_by_filed(filter_options)
+        for item in order.order_products:
+            item.price = float(item.price)
+            item.total_price = float(item.total_price)
+
+        order.total_amount = float(order.total_amount)
         if not order:
             raise NotFoundException(message=ERROR_MAPPER[NO_DATA])
 
         if order.status == status:
             raise RequestError()
 
-        updated_order, _ = await self.order_repo.update_obj(
+        updated_order = await self.order_repo.update_obj(  # noqa: F841
             where=filter_options.filters, values={"status": status}
         )
 
-        return OrderResponse.model_validate(updated_order)
+        return OrderResponse.model_validate(order)
