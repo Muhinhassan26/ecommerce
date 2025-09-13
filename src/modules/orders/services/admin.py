@@ -24,7 +24,10 @@ class OrderAdminService(BaseService):
         query_params: QueryParams,
         user_id: int,
     ) -> PaginatedResponse[OrderResponse]:
-        filters = {"user_id": int(user_id)}
+        filters = {}
+        if user_id is not None:
+            filters["user_id"] = int(user_id)
+
         if query_params.filter_params:
             filters.update(query_params.filter_params)
         filter_options = FilterOptions(
@@ -38,7 +41,7 @@ class OrderAdminService(BaseService):
         orders, total = await self.order_repo.paginate_filters(filter_options)
         return PaginatedResponse[OrderResponse](
             data=[OrderResponse.model_validate(order) for order in orders],
-            meta=self.setup_pagination_meta(
+            meta=await self.setup_pagination_meta(
                 total=total,
                 page_size=query_params.page_size,
                 page=query_params.page,

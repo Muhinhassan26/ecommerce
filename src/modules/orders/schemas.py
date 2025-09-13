@@ -12,11 +12,7 @@ class OrderProductResponse(BaseModel):
     quantity: int
     price: float
     total_price: float
-
-    class Config:
-        """Pydantic configuration for ORM mode."""
-
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class OrderCreate(BaseModel):
@@ -30,7 +26,4 @@ class OrderResponse(BaseModel):
     status: str
     order_products: list[OrderProductResponse]
 
-    class Config:
-        """Pydantic configuration for ORM mode."""
-
-        from_attributes = True
+    model_config = {"from_attributes": True}

@@ -34,6 +34,11 @@ class OrderUserService(BaseService):
             product = await self.product_repo.get_by_id(obj_id=item.product_id)
             if not product:
                 raise NotFoundException(message=ERROR_MAPPER[NO_DATA])
+            if product.stock < item.quantity:
+                raise RequestError(
+                    message=f"Not enough stock for product '{product.name}'. "
+                    f"Available: {product.stock}, Requested: {item.quantity}"
+                )
 
             price = float(product.price)
             total_price = price * float(item.quantity)
@@ -51,6 +56,10 @@ class OrderUserService(BaseService):
         order.order_products = order_products
 
         created_order = await self.order_repo.create(order)
+        created_order = await self.order_repo.get_by_id(
+            obj_id=created_order.id, filter_options=FilterOptions(prefetch=("order_products",))
+        )
+
         return OrderResponse.model_validate(created_order)
 
     async def get_my_orders(
@@ -69,8 +78,8 @@ class OrderUserService(BaseService):
 
         orders, total = await self.order_repo.paginate_filters(filter_options)
         return PaginatedResponse[OrderResponse](
-            data=orders,
-            meta=self.setup_pagination_meta(
+            data=[OrderResponse.model_validate(order) for order in orders],
+            meta=await self.setup_pagination_meta(
                 total=total, page_size=query_params.page_size, page=query_params.page
             ),
         )
@@ -97,8 +106,11 @@ class OrderUserService(BaseService):
         if order.status != OrderStatus.PENDING:
             raise RequestError()
 
-        updated_order, _ = await self.order_repo.update_obj(
+        updated_order = await self.order_repo.update_obj(
             where=filter_options.filters, values={"status": OrderStatus.CANCELLED}
         )
 
+        updated_order = await self.order_repo.get_by_id(
+            order_id, filter_options=FilterOptions(prefetch=("order_products",))
+        )
         return OrderResponse.model_validate(updated_order)

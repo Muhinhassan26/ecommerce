@@ -23,12 +23,10 @@ async def create_order(
 async def get_my_orders(
     request: Request,
     service: Annotated[OrderUserService, Depends(OrderUserService)],
-    query_params: QueryParams = Depends(
-        CommonQueryParam(filter_fields=["search", "created_at", "status"])
-    ),
+    query_params: QueryParams = Depends(CommonQueryParam(filter_fields=["created_at", "status"])),
 ) -> Any:
     user_id = request.state.user["user_id"]
-    return await service.get_my_orders(query_params=query_params, user_id=user_id)
+    return await service.get_my_orders(query_params=query_params, user_id=int(user_id))
 
 
 @router.get("/{order_id}", response_model=OrderResponse)
@@ -38,7 +36,7 @@ async def get_order_detail(
     service: Annotated[OrderUserService, Depends(OrderUserService)],
 ) -> Any:
     user_id = request.state.user["user_id"]
-    return await service.get_order_detail(user_id=user_id, order_id=order_id)
+    return await service.get_order_detail(user_id=int(user_id), order_id=order_id)
 
 
 @router.post("/{order_id}/cancel", response_model=OrderResponse)
@@ -48,4 +46,4 @@ async def cancel_order(
     service: Annotated[OrderUserService, Depends(OrderUserService)],
 ) -> Any:
     user_id = request.state.user["user_id"]
-    return await service.cancel_order(user_id=user_id, order_id=order_id)
+    return await service.cancel_order(user_id=int(user_id), order_id=order_id)
