@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from sqlalchemy import JSON, Select, and_, cast, delete, func, or_, select, update
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import RelationshipProperty, joinedload, selectinload
+from sqlalchemy.orm import Load, RelationshipProperty, joinedload, selectinload
 from src.core.db import ModelType, operators_map
 from src.core.schemas.common import FilterOptions
 
@@ -15,6 +15,27 @@ class BaseRepository(Generic[ModelType]):  # noqa: UP046
         self.model = model
         self.session = session
 
+    # def _get_query(
+    #     self,
+    #     prefetch: tuple[str, ...] | None = None,
+    #     options: list[Any] | None = None,
+    # ) -> Select[tuple[ModelType]]:
+    #     query = select(self.model)
+
+    #     if prefetch:
+    #         if options is None:
+    #             options = []
+    #         for relation in prefetch:
+    #             attr = getattr(self.model, relation)
+
+    #             if hasattr(attr, "property") and isinstance(attr.property, RelationshipProperty):
+    #                 if attr.property.uselist:
+    #                     options.append(selectinload(attr))
+    #                 else:
+    #                     options.append(joinedload(attr))
+    #         query = query.options(*options).execution_options(populate_existing=True)
+
+    #     return query
     def _get_query(
         self,
         prefetch: tuple[str, ...] | None = None,
@@ -25,14 +46,45 @@ class BaseRepository(Generic[ModelType]):  # noqa: UP046
         if prefetch:
             if options is None:
                 options = []
-            for relation in prefetch:
-                attr = getattr(self.model, relation)
 
-                if hasattr(attr, "property") and isinstance(attr.property, RelationshipProperty):
-                    if attr.property.uselist:
-                        options.append(selectinload(attr))
-                    else:
-                        options.append(joinedload(attr))
+            for relation in prefetch:
+                if "." in relation:
+                    parts = relation.split(".")
+                    loader: Load | None = None
+                    current_model = self.model
+
+                    for idx, part in enumerate(parts):
+                        attr = getattr(current_model, part)
+                        if idx == 0:
+                            if hasattr(attr, "property") and isinstance(
+                                attr.property, RelationshipProperty
+                            ):
+                                loader = (
+                                    selectinload(attr)
+                                    if attr.property.uselist
+                                    else joinedload(attr)
+                                )
+                        else:
+                            loader = loader.selectinload(attr)  # type: ignore
+
+                        if hasattr(attr, "property") and isinstance(
+                            attr.property, RelationshipProperty
+                        ):
+                            current_model = attr.property.mapper.class_
+
+                    if loader is not None:
+                        options.append(loader)
+
+                else:
+                    attr = getattr(self.model, relation)
+                    if hasattr(attr, "property") and isinstance(
+                        attr.property, RelationshipProperty
+                    ):
+                        if attr.property.uselist:
+                            options.append(selectinload(attr))
+                        else:
+                            options.append(joinedload(attr))
+
             query = query.options(*options).execution_options(populate_existing=True)
 
         return query
@@ -45,8 +97,9 @@ class BaseRepository(Generic[ModelType]):  # noqa: UP046
             result.append(getattr(field, direction)())
         return result
 
-    def _build_filters(self, filters: dict[str, Any]) -> list[Any]:
+    def _build_filters(self, filters: dict[str, Any] | None = None) -> list[Any]:
         """Build list of WHERE conditions."""
+        filters = filters or {}
         result = []
         for expression, value in filters.items():
             parts = expression.split("__")
@@ -71,12 +124,18 @@ class BaseRepository(Generic[ModelType]):  # noqa: UP046
     async def get_by_id(
         self,
         obj_id: int,
-        filter_options: FilterOptions,
+        filter_options: FilterOptions | None = None,
     ) -> ModelType | None:
-        query = self._get_query(prefetch=filter_options.prefetch).where(self.model.id == obj_id)  # type:ignore
+        query = self._get_query(prefetch=filter_options.prefetch if filter_options else None).where(
+            self.model.id == obj_id
+        )
 
-        session = self.session
-        result = await session.execute(query)
+        if filter_options and filter_options.filters:
+            for field, value in filter_options.filters.items():
+                if hasattr(self.model, field):
+                    query = query.where(getattr(self.model, field) == value)
+
+        result = await self.session.execute(query)
         return result.scalars().first()
 
     async def list_all(
@@ -127,8 +186,12 @@ class BaseRepository(Generic[ModelType]):  # noqa: UP046
             if or_conditions:
                 combined_conditions.append(or_(*or_conditions))
             final_condition = and_(*combined_conditions) if combined_conditions else None
+
+        if final_condition is not None:
+            query = query.where(final_condition)
+
         session = self.session
-        db_execute = await session.execute(query.where(final_condition))  # type: ignore
+        db_execute = await session.execute(query)
         return db_execute.scalars().first()
 
     async def filter(
@@ -241,14 +304,43 @@ class BaseRepository(Generic[ModelType]):  # noqa: UP046
         await session.refresh(obj)
         return obj
 
-    async def update_obj(self, where: dict[str, Any], values: dict[str, Any]) -> int:
+    # async def update_obj(
+    #     self, where: dict[str, Any] | None, values: dict[str, Any] | None
+    # ) -> tuple[ModelType, int] | bool | None:
+    #     session = self.session
+    #     filters = self._build_filters(where)
+
+    #     # Convert column names to strings for `values`
+    #     update_values = {}
+    #     for key, value in values.items():
+    #         if isinstance(value, dict) and isinstance(getattr(self.model, key).type, JSON):
+    #             update_values[key] = cast(getattr(self.model, key), JSONB).concat(
+    #                 cast(value, JSONB)
+    #             )
+    #         else:
+    #             update_values[key] = value
+
+    #     query = update(self.model).where(and_(True, *filters)).values(**update_values).returning
+    #     result = await session.execute(query)
+    #     await session.commit()
+
+    #     if result.rowcount == 0:
+    #         return None
+    #     return True
+
+    async def update_obj(
+        self, where: dict[str, Any] | None, values: dict[str, Any] | None
+    ) -> int | None:
+        if not where or not values:
+            return None
+
         session = self.session
         filters = self._build_filters(where)
 
-        # Convert column names to strings for `values`
         update_values = {}
         for key, value in values.items():
-            if isinstance(value, dict) and isinstance(getattr(self.model, key).type, JSON):
+            column = getattr(self.model, key).property.columns[0]
+            if isinstance(value, dict) and isinstance(column.type, (JSONB, JSON)):  # noqa: UP038
                 update_values[key] = cast(getattr(self.model, key), JSONB).concat(
                     cast(value, JSONB)
                 )
@@ -256,8 +348,12 @@ class BaseRepository(Generic[ModelType]):  # noqa: UP046
                 update_values[key] = value
 
         query = update(self.model).where(and_(True, *filters)).values(**update_values)
+
         result = await session.execute(query)
         await session.commit()
+        if result.rowcount == 0:
+            return None
+
         return result.rowcount
 
     async def create_and_update(

@@ -10,7 +10,7 @@ from starlette.requests import Request
 
 
 class CustomErrorMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next: Callable[[Request, Any]]) -> Any:
+    async def dispatch(self, request: Request, call_next: Callable[[Request], Any]) -> Any:
         try:
             return await call_next(request)
         except SQLAlchemyError:
@@ -32,14 +32,44 @@ class CustomErrorMiddleware(BaseHTTPMiddleware):
                 message=f"CustomException: {error_msg}",
                 status_code=exc.code,
                 user_message="Something went wrong" if exc.code == 500 else exc.message,
-                errors=None if exc.code == 500 else exc.errors,
+                error=None if exc.code == 500 else exc.errors,
             )
-        except Exception as exc:  # pylint: disable=broad-exception-caught
+
+        # except CustomException as exc:
+        #     import sys
+        #     import traceback
+
+        #     # Log full traceback for debugging
+        #     traceback.print_exc(file=sys.stdout)
+
+        #     # Show the actual message in DEBUG mode
+        #     user_message = (
+        #         str(exc)
+        #         if settings.DEBUG
+        #         else ("Something went wrong" if exc.code == 500 else exc.message)
+        #     )
+
+        #     return await self._handle_exception(
+        #         request,
+        #         message=f"CustomException: {exc}",
+        #         status_code=exc.code,
+        #         user_message=user_message,
+        #         error=exc if settings.DEBUG else None,
+        #     )
+
+        except Exception as exc:  # noqa: F841
+            # pylint: disable=broad-exception-caught
+            # import sys  # noqa: E401
+            # import traceback
+
             return await self._handle_exception(
                 request,
                 message=f"Unhandled Exception: {repr(exc)}",
                 status_code=500,
             )
+            # traceback.print_exc(file=sys.stdout)
+            # # Re-raise so FastAPI shows the real error in response (DEBUG mode)
+            # raise
 
     async def _handle_exception(
         self,

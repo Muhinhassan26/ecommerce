@@ -22,7 +22,7 @@ class QueryParams(BaseModel):
 
 
 class FilterOptions(BaseModel):
-    filters: dict[str, Any]
+    filters: dict[str, Any] | None = None
     pagination: QueryParams | None = None
     search_fields: list[str] | None = None
     sorting: dict[str, str] | None = None
@@ -47,6 +47,7 @@ class PaginationMeta(BaseModel):
 class PaginatedResponse(BaseModel, Generic[T]):  # noqa
     data: Sequence[T]
     meta: PaginationMeta
+    model_config = {"from_attributes": True}
 
 
 class ResponseMessage(BaseModel):

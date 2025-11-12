@@ -12,7 +12,7 @@ from src.core.error.codes import (
 )
 
 ERROR_MAPPER = {
-    USER_EXISTS: "User with this phone number already exists",
+    USER_EXISTS: "User with this email/username/phonenumber already exists",
     INVALID_USER: "Your account is invalid. Please contact Support",
     NO_DATA: "No data found",
     UNAUTHORIZED_ERROR: "Unauthorized",
